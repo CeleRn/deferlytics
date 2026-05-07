@@ -273,7 +273,9 @@ The package publishes only:
 
 ```txt
 dist/
+examples/
 README.md
+README_RU.md
 LICENSE
 package.json
 ```

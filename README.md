@@ -1,5 +1,7 @@
 # Deferlytics
 
+[English](README.md) | [Русский](README_RU.md)
+
 Performance-first delayed analytics bootstrapper for GA4 and Yandex Metrica.
 
 Deferlytics starts with a tiny browser bootstrap, buffers explicit analytics events, delays heavy vendor scripts, then replays queued events through native vendor APIs after consent, bot checks and the selected load strategy allow loading.

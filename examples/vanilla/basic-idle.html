@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Deferlytics Basic Idle Example</title>
+    <script src="../../dist/bootstrap.iife.js"></script>
+    <script>
+      fastAnalytics.init({
+        debug: true,
+        loadStrategy: "idle",
+        skipBots: true,
+        skipLighthouse: true,
+        vendors: {
+          ga4: {
+            enabled: true,
+            measurementId: "G-XXXXXXX",
+            sendPageView: false,
+          },
+          yandexMetrica: {
+            enabled: true,
+            counterId: 12345678,
+            webvisor: false,
+          },
+        },
+      });
+
+      fastAnalytics.page({ example: "basic-idle" });
+      fastAnalytics.track("early_example_event", { source: "bootstrap" });
+    </script>
+    <script defer src="../../dist/loader.iife.js"></script>
+  </head>
+  <body>
+    <main>
+      <h1>Basic idle loading</h1>
+      <p>Events are queued before the loader and replayed when vendors load during idle time.</p>
+      <button id="track-button" type="button">Track event</button>
+    </main>
+    <script>
+      document.getElementById("track-button").addEventListener("click", function () {
+        fastAnalytics.track("example_button_click", { source: "live-or-queued" });
+      });
+    </script>
+  </body>
+</html>

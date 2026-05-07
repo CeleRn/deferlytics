@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Deferlytics Manual Consent Example</title>
+    <style>
+      body {
+        color: #17202a;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        margin: 0;
+      }
+
+      main {
+        margin: 0 auto;
+        max-width: 760px;
+        padding: 40px 20px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 24px 0;
+      }
+
+      button {
+        background: #17202a;
+        border: 1px solid #17202a;
+        border-radius: 6px;
+        color: white;
+        cursor: pointer;
+        font: inherit;
+        min-height: 40px;
+        padding: 8px 12px;
+      }
+
+      button.secondary {
+        background: white;
+        color: #17202a;
+      }
+
+      pre {
+        background: #f4f6f8;
+        border: 1px solid #d9e0e7;
+        border-radius: 6px;
+        min-height: 160px;
+        overflow: auto;
+        padding: 14px;
+        white-space: pre-wrap;
+      }
+    </style>
+    <script src="../../dist/bootstrap.iife.js"></script>
+    <script>
+      function log(message) {
+        window.__exampleLog = window.__exampleLog || [];
+        window.__exampleLog.push(message);
+        var output = document.getElementById("log");
+        if (output) {
+          output.textContent = window.__exampleLog.join("\n");
+        }
+      }
+
+      fastAnalytics.init({
+        debug: true,
+        loadStrategy: "manual",
+        consent: {
+          required: true,
+          defaultStatus: "pending",
+        },
+        vendors: {
+          ga4: {
+            enabled: true,
+            measurementId: "G-XXXXXXX",
+            sendPageView: false,
+          },
+          yandexMetrica: {
+            enabled: true,
+            counterId: 12345678,
+            webvisor: false,
+          },
+        },
+      });
+
+      fastAnalytics.page({ example: "manual-consent" });
+      fastAnalytics.track("early_example_event", { source: "bootstrap" });
+      log("Queued page() and early_example_event before loader/runtime.");
+    </script>
+    <script defer src="../../dist/loader.iife.js"></script>
+  </head>
+  <body>
+    <main>
+      <h1>Manual loading with consent</h1>
+      <p>Grant consent, then load vendors. Queued events replay once after loading.</p>
+
+      <div class="actions">
+        <button id="grant-consent" type="button">Grant consent</button>
+        <button id="load-vendors" type="button" class="secondary">Load vendors</button>
+        <button id="track-button" type="button" class="secondary">Track event</button>
+        <button id="show-queue" type="button" class="secondary">Show queue size</button>
+      </div>
+
+      <pre id="log"></pre>
+    </main>
+
+    <script>
+      function queueSize() {
+        return window.__fastAnalyticsQueue ? window.__fastAnalyticsQueue.length : 0;
+      }
+
+      function refreshLog() {
+        var output = document.getElementById("log");
+        if (output && window.__exampleLog) {
+          output.textContent = window.__exampleLog.join("\n");
+        }
+      }
+
+      document.getElementById("grant-consent").addEventListener("click", function () {
+        fastAnalytics.consent("granted");
+        log("Consent granted. Vendors are now allowed to load.");
+      });
+
+      document.getElementById("load-vendors").addEventListener("click", function () {
+        Promise.resolve(fastAnalytics.loadVendors()).then(function () {
+          log("loadVendors() resolved. Queued events should be replayed once.");
+        });
+      });
+
+      document.getElementById("track-button").addEventListener("click", function () {
+        fastAnalytics.track("example_button_click", { source: "live-or-queued" });
+        log("Tracked example_button_click.");
+      });
+
+      document.getElementById("show-queue").addEventListener("click", function () {
+        log("Current bootstrap queue size: " + queueSize());
+      });
+
+      refreshLog();
+    </script>
+  </body>
+</html>

@@ -2,17 +2,17 @@
 
 [English](README.md) | [Русский](README_RU.md)
 
-Performance-first bootstrapper для отложенной загрузки GA4 и Яндекс.Метрики.
+Легкий загрузчик аналитики для GA4 и Яндекс.Метрики, который помогает не тащить тяжелые скрипты в критический путь загрузки страницы.
 
-Deferlytics запускается через маленький browser bootstrap, буферизует явно отправленные analytics events, откладывает загрузку тяжелых vendor scripts, а затем проигрывает накопленную очередь через нативные API vendors после проверки consent, bots и выбранной стратегии загрузки.
+Deferlytics запускает маленький bootstrap-скрипт как можно раньше, складывает явно отправленные события в очередь, откладывает загрузку аналитики, а затем проигрывает накопленные события через нативные API GA4 и Яндекс.Метрики. Перед загрузкой учитываются согласие пользователя, боты, Lighthouse и выбранная стратегия загрузки.
 
-Библиотека не эмулирует внутреннюю работу GA4 или Яндекс.Метрики. Нативный automatic tracking vendors начинается только после загрузки vendor scripts. События до этого момента сохраняются только если сайт явно отправил их через Deferlytics.
+Библиотека не пытается повторить внутреннюю логику GA4 или Яндекс.Метрики. Автоматический сбор данных самими сервисами начинается только после загрузки их скриптов. До этого момента сохраняются только события, которые сайт явно отправил через Deferlytics.
 
 ## Зачем
 
-Analytics scripts полезны, но часто попадают в critical path. Они могут конкурировать с rendering, hydration, user interaction и Core Web Vitals.
+Скрипты аналитики полезны, но часто загружаются слишком рано. Они могут конкурировать с отрисовкой страницы, гидрацией, первым взаимодействием пользователя и Core Web Vitals.
 
-Deferlytics оставляет ранний путь страницы маленьким:
+Deferlytics оставляет ранний путь страницы коротким:
 
 ```txt
 tiny bootstrap
@@ -24,7 +24,7 @@ tiny bootstrap
   -> live dispatch
 ```
 
-Bootstrap сохраняет только явные вызовы вроде `page()` и `track()`. GA4 и Яндекс.Метрика загружаются позже, вне critical path.
+Bootstrap сохраняет только явные вызовы вроде `page()` и `track()`. GA4 и Яндекс.Метрика подключаются позже, когда это уже не мешает начальной загрузке.
 
 ## Установка
 
@@ -34,7 +34,7 @@ npm install deferlytics
 
 ## Использование в браузере
 
-Подключите bootstrap как можно раньше в `<head>`, настройте аналитику и загрузите runtime позже.
+Подключите bootstrap как можно раньше в `<head>`, настройте аналитику и затем загрузите runtime-скрипт с `defer`.
 
 ```html
 <script src="/node_modules/deferlytics/dist/bootstrap.iife.js"></script>
@@ -71,7 +71,7 @@ npm install deferlytics
 <script defer src="/node_modules/deferlytics/dist/loader.iife.js"></script>
 ```
 
-До запуска `loader.iife.js` вызовы записываются в `window.__fastAnalyticsQueue`. После готовности vendors очередь проигрывается один раз, а новые события отправляются live.
+Пока `loader.iife.js` не запущен, вызовы попадают в `window.__fastAnalyticsQueue`. Когда сервисы аналитики готовы, очередь проигрывается один раз, а новые события начинают отправляться сразу.
 
 ## Использование через ESM
 
@@ -92,7 +92,7 @@ page();
 track("signup_click", { plan: "pro" });
 ```
 
-ESM entrypoint безопасен для browser-only сценариев: работа runtime начинается при вызове API methods.
+ESM entrypoint безопасен при импорте: runtime начинает работу только после вызова API-методов.
 
 ## API
 
@@ -106,7 +106,7 @@ fastAnalytics.flush();
 fastAnalytics.loadVendors();
 ```
 
-Те же методы экспортируются из ESM entrypoint:
+Те же методы доступны как ESM-экспорты:
 
 ```ts
 import {
@@ -155,12 +155,12 @@ fastAnalytics.init({
 
 ## Стратегии загрузки
 
-- `immediate`: загрузить vendors сразу после инициализации runtime.
+- `immediate`: загрузить аналитику сразу после инициализации runtime.
 - `load`: загрузить после события `window.load`.
-- `idle`: загрузить через `requestIdleCallback`, с fallback по timeout.
+- `idle`: загрузить через `requestIdleCallback`, с fallback по таймауту.
 - `interaction`: загрузить после первого взаимодействия пользователя.
 - `timeout`: загрузить после `loadTimeout`.
-- `manual`: загружать только после вызова `loadVendors()`.
+- `manual`: загружать только после явного вызова `loadVendors()`.
 
 Ручная загрузка:
 
@@ -176,7 +176,7 @@ fastAnalytics.track("early_event");
 fastAnalytics.loadVendors();
 ```
 
-## Consent
+## Согласие пользователя
 
 ```js
 fastAnalytics.init({
@@ -191,15 +191,15 @@ fastAnalytics.init({
 
 fastAnalytics.track("lead_form_open");
 
-// Вызвать после согласия пользователя на analytics cookies.
+// Вызовите после того, как пользователь разрешил аналитические cookies.
 fastAnalytics.consent("granted");
 ```
 
-Когда consent равен `denied` или требуется consent и он еще `pending`, vendor scripts не загружаются. Очередь при этом продолжает принимать explicit events. Если consent был выдан до запуска loader, раннее consent-событие используется как initial runtime consent state.
+Если согласие `denied`, либо согласие обязательно и еще находится в состоянии `pending`, скрипты аналитики не загружаются. Очередь при этом продолжает принимать явно отправленные события. Если пользователь дал согласие еще до запуска loader, это раннее событие используется как начальное состояние runtime.
 
-## Bot и Lighthouse Skip
+## Пропуск ботов и Lighthouse
 
-По умолчанию Deferlytics пропускает загрузку vendors для common bots, Lighthouse, PageSpeed, headless и webdriver-like окружений:
+По умолчанию Deferlytics не загружает аналитику для распространенных ботов, Lighthouse, PageSpeed, headless-браузеров и окружений с `navigator.webdriver`:
 
 ```js
 fastAnalytics.init({
@@ -208,9 +208,9 @@ fastAnalytics.init({
 });
 ```
 
-Если analytics skipped, очередь может принимать события, но GA4 и Яндекс.Метрика не загружаются.
+Если аналитика пропущена, очередь может продолжать принимать события, но GA4 и Яндекс.Метрика не загружаются.
 
-## Vendor Mapping
+## Как события отправляются в сервисы аналитики
 
 GA4:
 
@@ -224,40 +224,40 @@ GA4:
 - `track(name, params)` -> `ym(counterId, "reachGoal", name, params)`
 - `identify(userId, traits)` -> `ym(counterId, "userParams", traits)`
 
-Если vendor script уже есть на странице, Deferlytics переиспользует его и не добавляет duplicate script tag.
+Если скрипт аналитики уже есть на странице, Deferlytics переиспользует его и не добавляет второй такой же `<script>`.
 
-## Vanilla Examples
+## Vanilla-примеры
 
 См. [examples/vanilla](examples/vanilla).
 
 Сценарии:
 
-- [Basic idle loading](examples/vanilla/basic-idle.html): bootstrap queue, idle loading, replay и live events.
-- [Manual loading with consent](examples/vanilla/manual-consent.html): pending consent, manual loading и queue replay.
-- [Reusing an existing vendor script](examples/vanilla/existing-vendor.html): GA4 уже есть на странице, Deferlytics не добавляет duplicate script tag.
+- [Basic idle loading](examples/vanilla/basic-idle.html): очередь bootstrap, загрузка в idle, replay и live events.
+- [Manual loading with consent](examples/vanilla/manual-consent.html): ожидание согласия, ручная загрузка и replay очереди.
+- [Reusing an existing vendor script](examples/vanilla/existing-vendor.html): GA4 уже есть на странице, Deferlytics не добавляет дубликат.
 
-## Next.js Example
+## Пример для Next.js
 
 См. [examples/nextjs/README.md](examples/nextjs/README.md).
 
-Для SPA navigation вызывайте `page()` при смене route. Deferlytics не определяет route transitions фреймворка автоматически.
+Для SPA-навигации вызывайте `page()` при смене route. Deferlytics не отслеживает переходы внутри фреймворка автоматически.
 
-## Performance Recommendations
+## Рекомендации по производительности
 
 - Подключайте `bootstrap.iife.js` рано, но держите inline config маленьким.
-- Для production страниц используйте `idle`, `interaction`, `timeout` или `manual`, а не `immediate`.
+- Для production-страниц используйте `idle`, `interaction`, `timeout` или `manual`, а не `immediate`.
 - Для GA4 оставляйте `sendPageView: false` и вызывайте `page()` явно.
-- До загрузки vendors отслеживайте только business-critical early events.
-- Не добавляйте тяжелые custom plugins в bootstrap layer.
-- По возможности держите consent checks вне critical rendering path.
+- До загрузки аналитики отслеживайте только действительно важные ранние бизнес-события.
+- Не добавляйте тяжелую логику в bootstrap-слой.
+- По возможности не блокируйте отрисовку страницы проверками согласия.
 
 ## Ограничения
 
-- Deferlytics буферизует explicit events, а не все native vendor automatic events.
-- Vendor automatic tracking начинается только после загрузки vendor script.
-- SPA route changes нужно отправлять через `page()` вручную.
+- Deferlytics буферизует явно отправленные события, а не все автоматические события GA4 или Яндекс.Метрики.
+- Автоматический сбор данных сервисами аналитики начинается только после загрузки их скриптов.
+- В SPA переходы между страницами нужно отправлять через `page()` вручную.
 - Scroll, click, visibility и performance plugins пока не входят в MVP runtime.
-- Deferlytics это routing/replay layer, а не замена analytics backend.
+- Deferlytics это слой маршрутизации и replay событий, а не замена аналитическому backend.
 
 ## Разработка
 
@@ -275,6 +275,7 @@ npm pack --dry-run
 dist/
 examples/
 README.md
+README_RU.md
 LICENSE
 package.json
 ```

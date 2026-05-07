@@ -2,6 +2,12 @@
 
 This repository uses GitHub Actions for npm Trusted Publishing.
 
+## 0.2.0
+
+- Added support for multiple GA4 measurement IDs through `measurementIds`.
+- Added support for multiple Yandex Metrica counters through `counterIds`.
+- Kept existing single-value `measurementId` and `counterId` configs backward-compatible.
+
 Workflow:
 
 ```txt

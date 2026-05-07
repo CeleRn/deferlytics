@@ -22,7 +22,7 @@ export function AnalyticsScripts() {
             vendors: {
               ga4: {
                 enabled: true,
-                measurementId: "G-XXXXXXX",
+                measurementIds: ["G-XXXXXXX", "G-YYYYYYY"],
                 sendPageView: false
               }
             }
@@ -70,7 +70,7 @@ fastAnalytics.init({
     defaultStatus: "pending"
   },
   vendors: {
-    ga4: { enabled: true, measurementId: "G-XXXXXXX" }
+    ga4: { enabled: true, measurementIds: ["G-XXXXXXX", "G-YYYYYYY"] }
   }
 });
 ```

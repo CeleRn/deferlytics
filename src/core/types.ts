@@ -36,13 +36,15 @@ export interface ConsentConfig {
 
 export interface Ga4Config {
   enabled?: boolean;
-  measurementId: string;
+  measurementId?: string | string[];
+  measurementIds?: string[];
   sendPageView?: boolean;
 }
 
 export interface YandexMetricaConfig {
   enabled?: boolean;
-  counterId: number;
+  counterId?: number | number[];
+  counterIds?: number[];
   webvisor?: boolean;
   clickmap?: boolean;
   trackLinks?: boolean;

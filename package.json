@@ -1,6 +1,6 @@
 {
   "name": "deferlytics",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Performance-first delayed analytics bootstrapper for GA4 and Yandex Metrica",
   "type": "module",
   "main": "./dist/index.js",

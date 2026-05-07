@@ -46,4 +46,30 @@ describe("ga4 adapter", () => {
     ]);
     expect(win.dataLayer).toContainEqual(["event", "signup", { plan: "pro" }]);
   });
+
+  it("configures every measurement id", async () => {
+    const script = document.createElement("script");
+    script.id = "deferlytics-ga4-G-ONE";
+    script.src = "https://www.googletagmanager.com/gtag/js?id=G-ONE";
+    script.dataset.deferlyticsLoaded = "true";
+    document.head.appendChild(script);
+
+    const adapter = createGa4Adapter({
+      enabled: true,
+      measurementIds: ["G-ONE", "G-TWO"],
+    });
+    await adapter.init();
+
+    const win = window as DeferlyticsWindow;
+    expect(win.dataLayer).toContainEqual([
+      "config",
+      "G-ONE",
+      { send_page_view: false },
+    ]);
+    expect(win.dataLayer).toContainEqual([
+      "config",
+      "G-TWO",
+      { send_page_view: false },
+    ]);
+  });
 });

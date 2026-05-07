@@ -50,12 +50,12 @@ npm install deferlytics
     vendors: {
       ga4: {
         enabled: true,
-        measurementId: "G-XXXXXXX",
+        measurementIds: ["G-XXXXXXX", "G-YYYYYYY"],
         sendPageView: false
       },
       yandexMetrica: {
         enabled: true,
-        counterId: 12345678,
+        counterIds: [12345678, 87654321],
         webvisor: false,
         clickmap: true,
         trackLinks: true,
@@ -83,7 +83,7 @@ init({
   vendors: {
     ga4: {
       enabled: true,
-      measurementId: "G-XXXXXXX",
+      measurementIds: ["G-XXXXXXX", "G-YYYYYYY"],
     },
   },
 });
@@ -137,12 +137,12 @@ fastAnalytics.init({
   vendors: {
     ga4: {
       enabled: true,
-      measurementId: "G-XXXXXXX",
+      measurementIds: ["G-XXXXXXX", "G-YYYYYYY"],
       sendPageView: false
     },
     yandexMetrica: {
       enabled: true,
-      counterId: 12345678,
+      counterIds: [12345678, 87654321],
       webvisor: false,
       clickmap: true,
       trackLinks: true,
@@ -208,21 +208,25 @@ fastAnalytics.init({
 });
 ```
 
+`measurementId` и `counterId` по-прежнему работают для одного потока/счетчика.
+Для нескольких GA4 measurement ID или счетчиков Яндекс.Метрики используйте
+`measurementIds` и `counterIds`.
+
 Если аналитика пропущена, очередь может продолжать принимать события, но GA4 и Яндекс.Метрика не загружаются.
 
 ## Как события отправляются в сервисы аналитики
 
 GA4:
 
-- `page()` -> `gtag("event", "page_view", ...)`
-- `track(name, params)` -> `gtag("event", name, params)`
+- `page()` -> `gtag("event", "page_view", ...)` после инициализации всех настроенных measurement ID.
+- `track(name, params)` -> `gtag("event", name, params)` после инициализации всех настроенных measurement ID.
 - `identify(userId, traits)` -> `gtag("set", "user_id", userId)`
 
 Яндекс.Метрика:
 
-- `page()` -> `ym(counterId, "hit", url, ...)`
-- `track(name, params)` -> `ym(counterId, "reachGoal", name, params)`
-- `identify(userId, traits)` -> `ym(counterId, "userParams", traits)`
+- `page()` -> `ym(counterId, "hit", url, ...)` для каждого настроенного счетчика.
+- `track(name, params)` -> `ym(counterId, "reachGoal", name, params)` для каждого настроенного счетчика.
+- `identify(userId, traits)` -> `ym(counterId, "userParams", traits)` для каждого настроенного счетчика.
 
 Если скрипт аналитики уже есть на странице, Deferlytics переиспользует его и не добавляет второй такой же `<script>`.
 

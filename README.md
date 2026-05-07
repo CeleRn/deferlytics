@@ -50,12 +50,12 @@ Put the bootstrap as early as possible in `<head>`, configure analytics, then lo
     vendors: {
       ga4: {
         enabled: true,
-        measurementId: "G-XXXXXXX",
+        measurementIds: ["G-XXXXXXX", "G-YYYYYYY"],
         sendPageView: false
       },
       yandexMetrica: {
         enabled: true,
-        counterId: 12345678,
+        counterIds: [12345678, 87654321],
         webvisor: false,
         clickmap: true,
         trackLinks: true,
@@ -83,7 +83,7 @@ init({
   vendors: {
     ga4: {
       enabled: true,
-      measurementId: "G-XXXXXXX",
+      measurementIds: ["G-XXXXXXX", "G-YYYYYYY"],
     },
   },
 });
@@ -137,12 +137,12 @@ fastAnalytics.init({
   vendors: {
     ga4: {
       enabled: true,
-      measurementId: "G-XXXXXXX",
+      measurementIds: ["G-XXXXXXX", "G-YYYYYYY"],
       sendPageView: false
     },
     yandexMetrica: {
       enabled: true,
-      counterId: 12345678,
+      counterIds: [12345678, 87654321],
       webvisor: false,
       clickmap: true,
       trackLinks: true,
@@ -208,21 +208,25 @@ fastAnalytics.init({
 });
 ```
 
+`measurementId` and `counterId` are still supported for single-counter setups. Use
+`measurementIds` and `counterIds` when a site sends events to multiple GA4 streams
+or Yandex Metrica counters.
+
 When analytics are skipped, the queue can still accept events, but GA4 and Yandex Metrica scripts are not loaded.
 
 ## Vendor Mapping
 
 GA4:
 
-- `page()` -> `gtag("event", "page_view", ...)`
-- `track(name, params)` -> `gtag("event", name, params)`
+- `page()` -> `gtag("event", "page_view", ...)` after all configured measurement IDs are initialized.
+- `track(name, params)` -> `gtag("event", name, params)` after all configured measurement IDs are initialized.
 - `identify(userId, traits)` -> `gtag("set", "user_id", userId)`
 
 Yandex Metrica:
 
-- `page()` -> `ym(counterId, "hit", url, ...)`
-- `track(name, params)` -> `ym(counterId, "reachGoal", name, params)`
-- `identify(userId, traits)` -> `ym(counterId, "userParams", traits)`
+- `page()` -> `ym(counterId, "hit", url, ...)` for every configured counter.
+- `track(name, params)` -> `ym(counterId, "reachGoal", name, params)` for every configured counter.
+- `identify(userId, traits)` -> `ym(counterId, "userParams", traits)` for every configured counter.
 
 If a vendor script is already present on the page, Deferlytics reuses it instead of adding a duplicate script tag.
 

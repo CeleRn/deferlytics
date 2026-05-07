@@ -5,13 +5,14 @@ import { getBrowserWindow } from "../core/utils";
 
 export function createGa4Adapter(config: Ga4Config): AnalyticsAdapter {
   let ready = false;
+  const measurementIds = resolveMeasurementIds(config);
 
   return {
     name: "ga4",
-    enabled: config.enabled !== false && Boolean(config.measurementId),
+    enabled: config.enabled !== false && measurementIds.length > 0,
     async init() {
       const win = getBrowserWindow();
-      if (!win || !config.measurementId) {
+      if (!win || measurementIds.length === 0) {
         return;
       }
 
@@ -23,15 +24,18 @@ export function createGa4Adapter(config: Ga4Config): AnalyticsAdapter {
         };
 
       win.gtag("js", new Date());
-      win.gtag("config", config.measurementId, {
-        send_page_view: config.sendPageView ?? false,
-      });
+      for (const measurementId of measurementIds) {
+        win.gtag("config", measurementId, {
+          send_page_view: config.sendPageView ?? false,
+        });
+      }
 
+      const primaryMeasurementId = measurementIds[0];
       await loadScript(
         `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(
-          config.measurementId,
+          primaryMeasurementId,
         )}`,
-        { id: `deferlytics-ga4-${config.measurementId}` },
+        { id: `deferlytics-ga4-${primaryMeasurementId}` },
       );
 
       ready = true;
@@ -73,4 +77,12 @@ export function createGa4Adapter(config: Ga4Config): AnalyticsAdapter {
       return ready;
     },
   };
+}
+
+function resolveMeasurementIds(config: Ga4Config): string[] {
+  const ids = [config.measurementId, config.measurementIds]
+    .flat()
+    .filter((id): id is string => typeof id === "string" && id.length > 0);
+
+  return Array.from(new Set(ids));
 }

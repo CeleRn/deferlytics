@@ -1,0 +1,48 @@
+name: Bug report
+description: Report incorrect behavior in Deferlytics.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened, and what did you expect instead?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Deferlytics version
+      placeholder: "0.2.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Browser script
+        - ESM package
+        - Next.js example
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Configuration
+      description: Redact measurement IDs, counter IDs, and other sensitive values.
+      render: js
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Link to a minimal reproduction or provide steps.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Include console output, network observations, or screenshots if relevant.
